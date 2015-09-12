@@ -60,7 +60,7 @@ class NeuralNetwork:
         for idx, (edata, elabel) in enumerate(zip(data, label)):
             ans = getAnswer(self.forwardPropagation(edata))
             if ans != elabel:
-                print idx, ans, elabel
+                #print idx, ans, elabel
                 errCount += 1.
         print 'Error rate : ', errCount / len(data) 
  
@@ -92,7 +92,7 @@ class NeuralNetwork:
             dIntercept = [np.zeros(self.intercept[i].shape) for i in xrange(len(self.layer) - 1)]
 
             learningRate = rateManager.rate
-            print 'learningRate = ', learningRate
+            #print 'learningRate = ', learningRate
             for i in xrange(dataNum):
                 self.forwardPropagation(data[i])
                 delta[-1] = self.a[-1]
@@ -108,7 +108,7 @@ class NeuralNetwork:
                 if l < len(self.layer) - 1:
                     self.intercept[l] -= learningRate * (dIntercept[l] / dataNum)
 
-            print 'rep = ',rep,'div = ', getNorm(dWeight) + getNorm(dIntercept),'cost = ',self.getCost(data, label)
+       #     print 'rep = ',rep,'div = ', getNorm(dWeight) + getNorm(dIntercept),'cost = ',self.getCost(data, label)
 
             rateManager.update(self.getCost(data, label))
 
@@ -161,8 +161,13 @@ def test():
     trainData = map(lambda x : x / 255., trainData)
     testData = map(lambda x : x / 255., testData)
 
-    nn = NeuralNetwork([rows * cols, 10], 10, 0.0)
-    nn.BPtraining(trainData[:10000], trainLabel[:10000], 2.5, 400)
+    nn = NeuralNetwork([rows * cols, 80], 10, 0.0)
+    step = 10
+    blockSize = 100
+#    for rep in xrange(step):
+    for i in xrange(0, dataNum, blockSize):
+        print i, '%2.2f' % (i*100. / dataNum) + '%'
+        nn.BPtraining(trainData[i:i + blockSize], trainLabel[i:i + blockSize], 2.5, 30)
 
     print 'training data:'
     nn.test(trainData, trainLabel)
