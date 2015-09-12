@@ -52,6 +52,7 @@ class NeuralNetwork:
         for i in xrange(len(data)):
             self.forwardPropagation(data[i])
             res += -np.log(self.a[-1][ label[i] ])
+        res /= len(data)
         return res
 
     def test(self, data, label):
@@ -74,8 +75,7 @@ class NeuralNetwork:
 
             for i in xrange(dataNum):
                 self.forwardPropagation(data[i])
-                delta[-1] = np.array([np.exp(self.z[-1][row]) for row in xrange(self.nlabel)])
-                delta[-1] /= np.sum(delta[-1])
+                delta[-1] = self.a[-1]
                 delta[-1][ label[i] ] -= 1.
                 for l in reversed(xrange(len(self.layer))):
                     delta[l] = np.multiply(delta[l + 1].dot(self.weight[l]), dev_signmoid(self.z[l]))
@@ -88,7 +88,7 @@ class NeuralNetwork:
                 if l < len(self.layer) - 1:
                     self.intercept[l] -= learningRate * (dIntercept[l] / dataNum)
 
-            print 'rep = ', rep, 'div = ', getNorm(dWeight) + getNorm(dIntercept), self.getCost(data, label)
+            print 'rep = ',rep,'div = ', getNorm(dWeight) + getNorm(dIntercept),'cost = ',self.getCost(data, label)
 
 
 def getAnswer(distribute):
