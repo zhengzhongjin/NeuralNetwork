@@ -52,7 +52,7 @@ class NeuralNetwork:
         for i in xrange(len(data)):
             self.forwardPropagation(data[i])
             res += -np.log(self.a[-1][ label[i] ])
-        res /= len(data)
+        #res /= len(data)
         return res
 
     def test(self, data, label):
@@ -64,15 +64,35 @@ class NeuralNetwork:
                 errCount += 1.
         print 'Error rate : ', errCount / len(data) 
  
+    class DynamicRate:
+        def __init__(self, initRate = 1.0):
+            self.rate = initRate
+            self.lastCost = 1e20
+            self.count = 0
+
+        def update(self, curCost):
+            if curCost < self.lastCost:
+                self.count += 1
+                if self.count > 4:
+                    self.rate += 0.2
+                    self.count = 0
+            else:
+                self.count = 0
+                if self.rate > 1.8:
+                    self.rate -= 0.2
+            self.lastCost = curCost
+
     def BPtraining(self, data, label, learningRate, repeat = 100):
         dataNum = len(data)
-
+        rateManager = self.DynamicRate(learningRate)
         for rep in xrange(repeat):
             delta = [np.zeros(self.layer[i]) for i in xrange(len(self.layer))]
             delta.append(np.zeros(self.nlabel))
             dWeight = [np.zeros(self.weight[i].shape) for i in xrange(len(self.layer))]
             dIntercept = [np.zeros(self.intercept[i].shape) for i in xrange(len(self.layer) - 1)]
 
+            learningRate = rateManager.rate
+            print 'learningRate = ', learningRate
             for i in xrange(dataNum):
                 self.forwardPropagation(data[i])
                 delta[-1] = self.a[-1]
@@ -89,6 +109,8 @@ class NeuralNetwork:
                     self.intercept[l] -= learningRate * (dIntercept[l] / dataNum)
 
             print 'rep = ',rep,'div = ', getNorm(dWeight) + getNorm(dIntercept),'cost = ',self.getCost(data, label)
+
+            rateManager.update(self.getCost(data, label))
 
 
 def getAnswer(distribute):
@@ -140,7 +162,7 @@ def test():
     testData = map(lambda x : x / 255., testData)
 
     nn = NeuralNetwork([rows * cols, 10], 10, 0.0)
-    nn.BPtraining(trainData[:], trainLabel[:], 2.5, 100)
+    nn.BPtraining(trainData[:10000], trainLabel[:10000], 2.5, 400)
 
     print 'training data:'
     nn.test(trainData, trainLabel)
